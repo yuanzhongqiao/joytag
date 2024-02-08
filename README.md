@@ -83,76 +83,7 @@
 <span class="pl-en">print</span>(<span class="pl-s1">tag_string</span>)
 <span class="pl-k">for</span> <span class="pl-s1">tag</span>, <span class="pl-s1">score</span> <span class="pl-c1">in</span> <span class="pl-en">sorted</span>(<span class="pl-s1">scores</span>.<span class="pl-en">items</span>(), <span class="pl-s1">key</span><span class="pl-c1">=</span><span class="pl-k">lambda</span> <span class="pl-s1">x</span>: <span class="pl-s1">x</span>[<span class="pl-c1">1</span>], <span class="pl-s1">reverse</span><span class="pl-c1">=</span><span class="pl-c1">True</span>):
 	<span class="pl-en">print</span>(<span class="pl-s">f'<span class="pl-s1"><span class="pl-kos">{</span><span class="pl-s1">tag</span><span class="pl-kos">}</span></span>: <span class="pl-s1"><span class="pl-kos">{</span><span class="pl-s1">score</span>:.3f<span class="pl-kos">}</span></span>'</span>)</pre><div class="zeroclipboard-container">
-    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="from Models import VisionModel
-from PIL import Image
-import torch.amp.autocast_mode
-from pathlib import Path
-import torch
-import torchvision.transforms.functional as TVF
-
-path = '/home/.../joytag/models'  # Change this to where you downloaded the model
-THRESHOLD = 0.4
-
-model = VisionModel.load_model(path)
-model.eval()
-model = model.to('cuda')
-
-with open(Path(path) / 'top_tags.txt', 'r') as f:
-	top_tags = [line.strip() for line in f.readlines() if line.strip()]
-
-def prepare_image(image: Image.Image, target_size: int) -> torch.Tensor:
-	# Pad image to square
-	image_shape = image.size
-	max_dim = max(image_shape)
-	pad_left = (max_dim - image_shape[0]) // 2
-	pad_top = (max_dim - image_shape[1]) // 2
-
-	padded_image = Image.new('RGB', (max_dim, max_dim), (255, 255, 255))
-	padded_image.paste(image, (pad_left, pad_top))
-
-	# Resize image
-	if max_dim != target_size:
-		padded_image = padded_image.resize((target_size, target_size), Image.BICUBIC)
-	
-	# Convert to tensor
-	image_tensor = TVF.pil_to_tensor(padded_image) / 255.0
-
-	# Normalize
-	image_tensor = TVF.normalize(image_tensor, mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711])
-
-	return image_tensor
-
-
-@torch.no_grad()
-def predict(image: Image.Image):
-	image_tensor = prepare_image(image, model.image_size)
-	batch = {
-		'image': image_tensor.unsqueeze(0).to('cuda'),
-	}
-
-	with torch.amp.autocast_mode.autocast('cuda', enabled=True):
-		preds = model(batch)
-		tag_preds = preds['tags'].sigmoid().cpu()
-	
-	scores = {top_tags[i]: tag_preds[0][i] for i in range(len(top_tags))}
-	predicted_tags = [tag for tag, score in scores.items() if score > THRESHOLD]
-	tag_string = ', '.join(predicted_tags)
-
-	return tag_string, scores
-
-image = Image.open('test.jpg')
-tag_string, scores = predict(image)
-
-print(tag_string)
-for tag, score in sorted(scores.items(), key=lambda x: x[1], reverse=True):
-	print(f'{tag}: {score:.3f}')" tabindex="0" role="button">
-      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
-    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
-</svg>
-      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
-    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
-</svg>
-    </clipboard-copy>
+    
   </div></div>
 <h2 tabindex="-1" dir="auto"><a id="user-content-goal" class="anchor" aria-hidden="true" tabindex="-1" href="#goal"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">目标</font></font></h2>
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">大多数公共视觉模型都对其训练数据集进行严格过滤。</font><font style="vertical-align: inherit;">这意味着当今的基础视觉模型在广泛概念的基础层面上表现不佳。</font><font style="vertical-align: inherit;">这限制了言论自由、包容性和多样性。</font><font style="vertical-align: inherit;">它还限制了机器学习模型对我们世界的基本理解。</font><font style="vertical-align: inherit;">JoyTag 团队相信，人类用户应该自由表达自己，而不会因任意和反复无常的内容过滤而受到歧视。</font><font style="vertical-align: inherit;">JoyTag团队还认为，机器学习模型应该对世界有广泛、深入、包容的理解。</font><font style="vertical-align: inherit;">这并不排除使用训练后对齐来减少模型中的偏差，但它确实排除了使用过滤或对齐来降低模型理解世界的能力或用户表达自己的能力。</font></font></p>
