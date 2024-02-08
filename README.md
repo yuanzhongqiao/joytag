@@ -44,20 +44,7 @@
 	<span class="pl-s1">pad_left</span> <span class="pl-c1">=</span> (<span class="pl-s1">max_dim</span> <span class="pl-c1">-</span> <span class="pl-s1">image_shape</span>[<span class="pl-c1">0</span>]) <span class="pl-c1">//</span> <span class="pl-c1">2</span>
 	<span class="pl-s1">pad_top</span> <span class="pl-c1">=</span> (<span class="pl-s1">max_dim</span> <span class="pl-c1">-</span> <span class="pl-s1">image_shape</span>[<span class="pl-c1">1</span>]) <span class="pl-c1">//</span> <span class="pl-c1">2</span>
 
-	<span class="pl-s1">padded_image</span> <span class="pl-c1">=</span> <span class="pl-v">Image</span>.<span class="pl-en">new</span>(<span class="pl-s">'RGB'</span>, (<span class="pl-s1">max_dim</span>, <span class="pl-s1">max_dim</span>), (<span class="pl-c1">255</span>, <span class="pl-c1">255</span>, <span class="pl-c1">255</span>))
-	<span class="pl-s1">padded_image</span>.<span class="pl-en">paste</span>(<span class="pl-s1">image</span>, (<span class="pl-s1">pad_left</span>, <span class="pl-s1">pad_top</span>))
-
-	<span class="pl-c"># Resize image</span>
-	<span class="pl-k">if</span> <span class="pl-s1">max_dim</span> <span class="pl-c1">!=</span> <span class="pl-s1">target_size</span>:
-		<span class="pl-s1">padded_image</span> <span class="pl-c1">=</span> <span class="pl-s1">padded_image</span>.<span class="pl-en">resize</span>((<span class="pl-s1">target_size</span>, <span class="pl-s1">target_size</span>), <span class="pl-v">Image</span>.<span class="pl-v">BICUBIC</span>)
-	
-	<span class="pl-c"># Convert to tensor</span>
-	<span class="pl-s1">image_tensor</span> <span class="pl-c1">=</span> <span class="pl-v">TVF</span>.<span class="pl-en">pil_to_tensor</span>(<span class="pl-s1">padded_image</span>) <span class="pl-c1">/</span> <span class="pl-c1">255.0</span>
-
-	<span class="pl-c"># Normalize</span>
-	<span class="pl-s1">image_tensor</span> <span class="pl-c1">=</span> <span class="pl-v">TVF</span>.<span class="pl-en">normalize</span>(<span class="pl-s1">image_tensor</span>, <span class="pl-s1">mean</span><span class="pl-c1">=</span>[<span class="pl-c1">0.48145466</span>, <span class="pl-c1">0.4578275</span>, <span class="pl-c1">0.40821073</span>], <span class="pl-s1">std</span><span class="pl-c1">=</span>[<span class="pl-c1">0.26862954</span>, <span class="pl-c1">0.26130258</span>, <span class="pl-c1">0.27577711</span>])
-
-	<span class="pl-k">return</span> <span class="pl-s1">image_tensor</span>
+	 
 
 
 <span class="pl-en">@<span class="pl-s1">torch</span>.<span class="pl-en">no_grad</span>()</span>
@@ -67,22 +54,7 @@
 		<span class="pl-s">'image'</span>: <span class="pl-s1">image_tensor</span>.<span class="pl-en">unsqueeze</span>(<span class="pl-c1">0</span>).<span class="pl-en">to</span>(<span class="pl-s">'cuda'</span>),
 	}
 
-	<span class="pl-k">with</span> <span class="pl-s1">torch</span>.<span class="pl-s1">amp</span>.<span class="pl-s1">autocast_mode</span>.<span class="pl-en">autocast</span>(<span class="pl-s">'cuda'</span>, <span class="pl-s1">enabled</span><span class="pl-c1">=</span><span class="pl-c1">True</span>):
-		<span class="pl-s1">preds</span> <span class="pl-c1">=</span> <span class="pl-en">model</span>(<span class="pl-s1">batch</span>)
-		<span class="pl-s1">tag_preds</span> <span class="pl-c1">=</span> <span class="pl-s1">preds</span>[<span class="pl-s">'tags'</span>].<span class="pl-en">sigmoid</span>().<span class="pl-en">cpu</span>()
-	
-	<span class="pl-s1">scores</span> <span class="pl-c1">=</span> {<span class="pl-s1">top_tags</span>[<span class="pl-s1">i</span>]: <span class="pl-s1">tag_preds</span>[<span class="pl-c1">0</span>][<span class="pl-s1">i</span>] <span class="pl-k">for</span> <span class="pl-s1">i</span> <span class="pl-c1">in</span> <span class="pl-en">range</span>(<span class="pl-en">len</span>(<span class="pl-s1">top_tags</span>))}
-	<span class="pl-s1">predicted_tags</span> <span class="pl-c1">=</span> [<span class="pl-s1">tag</span> <span class="pl-k">for</span> <span class="pl-s1">tag</span>, <span class="pl-s1">score</span> <span class="pl-c1">in</span> <span class="pl-s1">scores</span>.<span class="pl-en">items</span>() <span class="pl-k">if</span> <span class="pl-s1">score</span> <span class="pl-c1">&gt;</span> <span class="pl-v">THRESHOLD</span>]
-	<span class="pl-s1">tag_string</span> <span class="pl-c1">=</span> <span class="pl-s">', '</span>.<span class="pl-en">join</span>(<span class="pl-s1">predicted_tags</span>)
-
-	<span class="pl-k">return</span> <span class="pl-s1">tag_string</span>, <span class="pl-s1">scores</span>
-
-<span class="pl-s1">image</span> <span class="pl-c1">=</span> <span class="pl-v">Image</span>.<span class="pl-en">open</span>(<span class="pl-s">'test.jpg'</span>)
-<span class="pl-s1">tag_string</span>, <span class="pl-s1">scores</span> <span class="pl-c1">=</span> <span class="pl-en">predict</span>(<span class="pl-s1">image</span>)
-
-<span class="pl-en">print</span>(<span class="pl-s1">tag_string</span>)
-<span class="pl-k">for</span> <span class="pl-s1">tag</span>, <span class="pl-s1">score</span> <span class="pl-c1">in</span> <span class="pl-en">sorted</span>(<span class="pl-s1">scores</span>.<span class="pl-en">items</span>(), <span class="pl-s1">key</span><span class="pl-c1">=</span><span class="pl-k">lambda</span> <span class="pl-s1">x</span>: <span class="pl-s1">x</span>[<span class="pl-c1">1</span>], <span class="pl-s1">reverse</span><span class="pl-c1">=</span><span class="pl-c1">True</span>):
-	<span class="pl-en">print</span>(<span class="pl-s">f'<span class="pl-s1"><span class="pl-kos">{</span><span class="pl-s1">tag</span><span class="pl-kos">}</span></span>: <span class="pl-s1"><span class="pl-kos">{</span><span class="pl-s1">score</span>:.3f<span class="pl-kos">}</span></span>'</span>)</pre><div class="zeroclipboard-container">
+	 
     
   </div></div>
 <h2 tabindex="-1" dir="auto"><a id="user-content-goal" class="anchor" aria-hidden="true" tabindex="-1" href="#goal"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">目标</font></font></h2>
